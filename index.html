@@ -1,27 +1,34 @@
 <!DOCTYPE html>
-<html lang="en">
+<html lang="en" data-theme="dark">
 
 <head>
     <meta charset="UTF-8" />
     <meta name="viewport" content="width=device-width, initial-scale=1.0" />
     <title>SciBot — Your Science Project Buddy 🔬</title>
     <meta name="description"
-        content="A friendly chatbot that helps students aged 10-15 discover and build fun science projects." />
+        content="A friendly AI chatbot that helps students aged 10-15 discover and build fun science projects." />
+    <link rel="icon"
+        href="data:image/svg+xml,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 100 100'><text y='.9em' font-size='90'>🧪</text></svg>" />
     <link rel="preconnect" href="https://fonts.googleapis.com" />
     <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
-    <link href="https://fonts.googleapis.com/css2?family=Nunito:wght@400;600;700;800&display=swap" rel="stylesheet" />
+    <link
+        href="https://fonts.googleapis.com/css2?family=Space+Grotesk:wght@400;500;600;700&family=Inter:wght@400;500;600;700&display=swap"
+        rel="stylesheet" />
     <link rel="stylesheet" href="style.css" />
 </head>
 
 <body>
+    <!-- Animated Background -->
+    <canvas id="starfield"></canvas>
+
     <!-- API Key Modal -->
     <div class="modal-overlay" id="apiKeyModal">
         <div class="modal">
             <div class="modal-icon">🔑</div>
-            <h2>Enter your Gemini API Key</h2>
-            <p>Paste your API key below to power SciBot's AI brain. It's saved in your browser only — never shared.</p>
+            <h2>Welcome to SciBot</h2>
+            <p>Paste your Gemini API key to unlock AI-powered science help. It stays in your browser — never shared.</p>
             <input type="password" id="apiKeyInput" class="modal-input" placeholder="AIzaSy..." autocomplete="off" />
-            <button id="apiKeySave" class="modal-btn">Start Exploring! 🚀</button>
+            <button id="apiKeySave" class="modal-btn">Launch SciBot 🚀</button>
             <a href="https://aistudio.google.com/apikey" target="_blank" class="modal-link">Don't have a key? Get one
                 free →</a>
         </div>
@@ -30,17 +37,25 @@
     <div class="app">
         <!-- Header -->
         <header class="header">
-            <div class="header-logo">
-                <span class="logo-icon">🧪</span>
-                <h1>SciBot</h1>
+            <div class="header-left">
+                <div class="header-logo">
+                    <span class="logo-icon">🧪</span>
+                    <div>
+                        <h1>SciBot</h1>
+                        <p class="header-tagline">AI Science Buddy · <span class="gemini-badge">Gemini ✨</span></p>
+                    </div>
+                </div>
             </div>
-            <p class="header-tagline">Your Science Project Buddy · <span class="gemini-badge">✨ Powered by Gemini
-                    AI</span></p>
+            <div class="header-right">
+                <button class="theme-toggle" id="themeToggle" aria-label="Toggle theme">
+                    <span class="theme-icon" id="themeIcon">🌙</span>
+                </button>
+            </div>
         </header>
 
         <!-- Chat Area -->
         <main class="chat-area" id="chatArea">
-            <!-- Messages will be injected here -->
+            <!-- Messages injected here -->
         </main>
 
         <!-- Quick Suggestions -->
@@ -57,7 +72,7 @@
             <input type="text" id="userInput" class="input-field" placeholder="Ask me about science projects..."
                 autocomplete="off" />
             <button type="submit" class="send-btn" id="sendBtn" aria-label="Send message">
-                <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"
+                <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"
                     stroke-linecap="round" stroke-linejoin="round">
                     <line x1="22" y1="2" x2="11" y2="13"></line>
                     <polygon points="22 2 15 22 11 13 2 9 22 2"></polygon>

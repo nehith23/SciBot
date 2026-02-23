@@ -25,7 +25,6 @@ apiKeySave.addEventListener('click', () => {
     GEMINI_API_KEY = key;
     localStorage.setItem('scibot_api_key', key);
     apiKeyModal.classList.add('hidden');
-    // Start the greeting after key is saved
     bootGreetings();
 });
 
@@ -33,6 +32,95 @@ apiKeyInput.addEventListener('keydown', (e) => {
     if (e.key === 'Enter') apiKeySave.click();
 });
 
+// ===== Theme Toggle =====
+const themeToggle = document.getElementById('themeToggle');
+const themeIcon = document.getElementById('themeIcon');
+const html = document.documentElement;
+
+const savedTheme = localStorage.getItem('scibot_theme') || 'dark';
+html.setAttribute('data-theme', savedTheme);
+themeIcon.textContent = savedTheme === 'dark' ? '🌙' : '☀️';
+
+themeToggle.addEventListener('click', () => {
+    const current = html.getAttribute('data-theme');
+    const next = current === 'dark' ? 'light' : 'dark';
+    html.setAttribute('data-theme', next);
+    themeIcon.textContent = next === 'dark' ? '🌙' : '☀️';
+    localStorage.setItem('scibot_theme', next);
+    // Update starfield colors
+    initStarfield();
+});
+
+// ===== Animated Starfield Background =====
+const canvas = document.getElementById('starfield');
+const ctx = canvas.getContext('2d');
+let stars = [];
+let animFrame;
+
+function initStarfield() {
+    canvas.width = window.innerWidth;
+    canvas.height = window.innerHeight;
+
+    const isDark = html.getAttribute('data-theme') === 'dark';
+    const starCount = 120;
+    stars = [];
+
+    for (let i = 0; i < starCount; i++) {
+        stars.push({
+            x: Math.random() * canvas.width,
+            y: Math.random() * canvas.height,
+            size: Math.random() * 2 + 0.5,
+            speed: Math.random() * 0.3 + 0.05,
+            opacity: Math.random() * 0.7 + 0.3,
+            pulse: Math.random() * Math.PI * 2,
+            color: isDark
+                ? (Math.random() > 0.7 ? '#7c5cfc' : Math.random() > 0.5 ? '#00e5b0' : '#ffffff')
+                : (Math.random() > 0.7 ? '#6b46f5' : Math.random() > 0.5 ? '#00b893' : '#8888cc')
+        });
+    }
+}
+
+function drawStarfield() {
+    ctx.clearRect(0, 0, canvas.width, canvas.height);
+
+    stars.forEach(star => {
+        star.pulse += 0.015;
+        star.y -= star.speed;
+        if (star.y < -5) {
+            star.y = canvas.height + 5;
+            star.x = Math.random() * canvas.width;
+        }
+
+        const flicker = Math.sin(star.pulse) * 0.3 + 0.7;
+        ctx.beginPath();
+        ctx.arc(star.x, star.y, star.size, 0, Math.PI * 2);
+        ctx.fillStyle = star.color;
+        ctx.globalAlpha = star.opacity * flicker;
+        ctx.fill();
+
+        // Glow effect for larger stars
+        if (star.size > 1.2) {
+            ctx.beginPath();
+            ctx.arc(star.x, star.y, star.size * 3, 0, Math.PI * 2);
+            ctx.fillStyle = star.color;
+            ctx.globalAlpha = star.opacity * flicker * 0.08;
+            ctx.fill();
+        }
+    });
+
+    ctx.globalAlpha = 1;
+    animFrame = requestAnimationFrame(drawStarfield);
+}
+
+window.addEventListener('resize', () => {
+    canvas.width = window.innerWidth;
+    canvas.height = window.innerHeight;
+});
+
+initStarfield();
+drawStarfield();
+
+// ===== System Prompt =====
 const SYSTEM_PROMPT = `You are SciBot, a fun and friendly science project helper for kids aged 10 to 15.
 
 IMPORTANT LANGUAGE RULES — Follow these strictly:
@@ -63,10 +151,10 @@ When suggesting a project, always include:
 
 Stay focused on science projects and learning. If someone asks about something that isn't science, gently bring them back to science in a fun way.`;
 
-// ===== Conversation History (for Gemini context) =====
+// ===== Conversation History =====
 let conversationHistory = [];
 
-// ===== Science Project Knowledge Base (quick offline responses) =====
+// ===== Built-in Projects =====
 const projects = {
     physics: [
         {
@@ -334,27 +422,19 @@ function getRandomItem(arr) {
     return arr[Math.floor(Math.random() * arr.length)];
 }
 
-// ===== Simple Markdown-to-HTML converter =====
+// ===== Markdown to HTML =====
 function markdownToHtml(text) {
     let html = text;
-    // Bold: **text**
     html = html.replace(/\*\*(.+?)\*\*/g, '<strong>$1</strong>');
-    // Italic: *text*
     html = html.replace(/\*(.+?)\*/g, '<em>$1</em>');
-    // Headers: ### text
     html = html.replace(/^### (.+)$/gm, '<h4>$1</h4>');
     html = html.replace(/^## (.+)$/gm, '<h3>$1</h3>');
     html = html.replace(/^# (.+)$/gm, '<h3>$1</h3>');
-    // Unordered list items: - text or * text
     html = html.replace(/^[\-\*] (.+)$/gm, '<li>$1</li>');
-    // Ordered list items: 1. text
     html = html.replace(/^\d+\.\s+(.+)$/gm, '<li>$1</li>');
-    // Wrap consecutive <li> in <ul> or <ol>
     html = html.replace(/((?:<li>.*<\/li>\n?)+)/g, '<ul>$1</ul>');
-    // Line breaks
     html = html.replace(/\n\n/g, '<br><br>');
     html = html.replace(/\n/g, '<br>');
-    // Cleanup double <br> around lists
     html = html.replace(/<br><ul>/g, '<ul>');
     html = html.replace(/<\/ul><br>/g, '</ul>');
     return html;
@@ -362,23 +442,16 @@ function markdownToHtml(text) {
 
 // ===== Gemini API Call =====
 async function askGemini(userMessage) {
-    // Add user message to conversation history
     conversationHistory.push({ role: 'user', parts: [{ text: userMessage }] });
 
-    // Keep conversation history manageable (last 20 turns)
     if (conversationHistory.length > 20) {
         conversationHistory = conversationHistory.slice(-20);
     }
 
     const requestBody = {
-        system_instruction: {
-            parts: [{ text: SYSTEM_PROMPT }]
-        },
+        system_instruction: { parts: [{ text: SYSTEM_PROMPT }] },
         contents: conversationHistory,
-        generationConfig: {
-            temperature: 0.8,
-            maxOutputTokens: 1024,
-        }
+        generationConfig: { temperature: 0.8, maxOutputTokens: 1024 }
     };
 
     try {
@@ -397,47 +470,31 @@ async function askGemini(userMessage) {
         const data = await response.json();
         const botText = data.candidates?.[0]?.content?.parts?.[0]?.text || "Hmm, I didn't get a response. Try again!";
 
-        // Add bot response to conversation history
         conversationHistory.push({ role: 'model', parts: [{ text: botText }] });
-
         return markdownToHtml(botText);
     } catch (error) {
         console.error('Error calling Gemini:', error);
-        return `Oops! I had trouble connecting to my AI brain 🧠 <br><br>Error: ${error.message}<br><br>But I still have my built-in projects — try tapping a category below! 👇`;
+        return `Oops! I had trouble connecting to my AI brain 🧠<br><br>Error: ${error.message}<br><br>But I still have my built-in projects — try tapping a category below! 👇`;
     }
 }
 
-// ===== Quick Offline Response Check =====
+// ===== Quick Offline Responses =====
 function getQuickResponse(input) {
     const lower = input.toLowerCase();
 
-    // Category: Physics
-    if (/^show me a physics/.test(lower) || /^physics project/.test(lower)) {
+    if (/^show me a physics/.test(lower) || /^physics project/.test(lower))
         return formatProject(getRandomItem(projects.physics));
-    }
-
-    // Category: Chemistry
-    if (/^show me a chemistry/.test(lower) || /^chemistry project/.test(lower)) {
+    if (/^show me a chemistry/.test(lower) || /^chemistry project/.test(lower))
         return formatProject(getRandomItem(projects.chemistry));
-    }
-
-    // Category: Biology
-    if (/^show me a biology/.test(lower) || /^biology project/.test(lower)) {
+    if (/^show me a biology/.test(lower) || /^biology project/.test(lower))
         return formatProject(getRandomItem(projects.biology));
-    }
-
-    // Category: Earth Science
-    if (/^show me an earth/.test(lower) || /^earth science project/.test(lower)) {
+    if (/^show me an earth/.test(lower) || /^earth science project/.test(lower))
         return formatProject(getRandomItem(projects.earth));
-    }
-
-    // Surprise / random
     if (/^surprise me/.test(lower)) {
-        const allProjects = [...projects.physics, ...projects.chemistry, ...projects.biology, ...projects.earth];
-        return formatProject(getRandomItem(allProjects));
+        const all = [...projects.physics, ...projects.chemistry, ...projects.biology, ...projects.earth];
+        return formatProject(getRandomItem(all));
     }
 
-    // No quick match — use Gemini
     return null;
 }
 
@@ -451,26 +508,21 @@ async function handleUserMessage(text) {
     showTyping();
     isProcessing = true;
 
-    // Disable input while processing
     userInput.disabled = true;
     document.getElementById('sendBtn').disabled = true;
 
-    // Check for quick offline response first (button clicks)
     const quickResponse = getQuickResponse(text);
 
     if (quickResponse) {
-        // Fake a short delay for built-in responses
-        await new Promise(r => setTimeout(r, 500 + Math.random() * 500));
+        await new Promise(r => setTimeout(r, 400 + Math.random() * 400));
         removeTyping();
         addMessage('bot', quickResponse);
     } else {
-        // Use Gemini AI
         const aiResponse = await askGemini(text);
         removeTyping();
         addMessage('bot', aiResponse);
     }
 
-    // Re-enable input
     isProcessing = false;
     userInput.disabled = false;
     document.getElementById('sendBtn').disabled = false;
@@ -500,7 +552,6 @@ function bootGreetings() {
     });
 }
 
-// Auto-boot if key already exists in localStorage
 if (GEMINI_API_KEY) {
     bootGreetings();
 }
