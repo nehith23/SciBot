@@ -440,12 +440,15 @@ function markdownToHtml(text) {
     return html;
 }
 
-// ===== Gemini API Call =====
-async function askGemini(userMessage) {
-    conversationHistory.push({ role: 'user', parts: [{ text: userMessage }] });
+// ===== Gemini API Call (with auto-retry) =====
+async function askGemini(userMessage, retryCount = 0) {
+    // Only add to history on first attempt
+    if (retryCount === 0) {
+        conversationHistory.push({ role: 'user', parts: [{ text: userMessage }] });
 
-    if (conversationHistory.length > 20) {
-        conversationHistory = conversationHistory.slice(-20);
+        if (conversationHistory.length > 20) {
+            conversationHistory = conversationHistory.slice(-20);
+        }
     }
 
     const requestBody = {
@@ -464,6 +467,22 @@ async function askGemini(userMessage) {
         if (!response.ok) {
             const err = await response.json();
             console.error('Gemini API error:', err);
+
+            // Auto-retry on rate limit (429) — up to 2 retries
+            if (response.status === 429 && retryCount < 2) {
+                // Parse wait time from error or default to 35s
+                const waitMatch = err.error?.message?.match(/retry in ([\d.]+)s/i);
+                const waitSecs = waitMatch ? Math.ceil(parseFloat(waitMatch[1])) : 35;
+
+                // Show a friendly waiting message
+                removeTyping();
+                addMessage('bot', `⏳ I'm a bit busy right now! Retrying in <strong>${waitSecs} seconds</strong>... hang tight!`);
+                showTyping();
+
+                await new Promise(r => setTimeout(r, waitSecs * 1000));
+                return askGemini(userMessage, retryCount + 1);
+            }
+
             throw new Error(err.error?.message || 'API request failed');
         }
 
