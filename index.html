@@ -1,0 +1,72 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>SciBot — Your Science Project Buddy 🔬</title>
+    <meta name="description"
+        content="A friendly chatbot that helps students aged 10-15 discover and build fun science projects." />
+    <link rel="preconnect" href="https://fonts.googleapis.com" />
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+    <link href="https://fonts.googleapis.com/css2?family=Nunito:wght@400;600;700;800&display=swap" rel="stylesheet" />
+    <link rel="stylesheet" href="style.css" />
+</head>
+
+<body>
+    <!-- API Key Modal -->
+    <div class="modal-overlay" id="apiKeyModal">
+        <div class="modal">
+            <div class="modal-icon">🔑</div>
+            <h2>Enter your Gemini API Key</h2>
+            <p>Paste your API key below to power SciBot's AI brain. It's saved in your browser only — never shared.</p>
+            <input type="password" id="apiKeyInput" class="modal-input" placeholder="AIzaSy..." autocomplete="off" />
+            <button id="apiKeySave" class="modal-btn">Start Exploring! 🚀</button>
+            <a href="https://aistudio.google.com/apikey" target="_blank" class="modal-link">Don't have a key? Get one
+                free →</a>
+        </div>
+    </div>
+
+    <div class="app">
+        <!-- Header -->
+        <header class="header">
+            <div class="header-logo">
+                <span class="logo-icon">🧪</span>
+                <h1>SciBot</h1>
+            </div>
+            <p class="header-tagline">Your Science Project Buddy · <span class="gemini-badge">✨ Powered by Gemini
+                    AI</span></p>
+        </header>
+
+        <!-- Chat Area -->
+        <main class="chat-area" id="chatArea">
+            <!-- Messages will be injected here -->
+        </main>
+
+        <!-- Quick Suggestions -->
+        <div class="suggestions" id="suggestions">
+            <button class="suggestion-btn" data-msg="Show me a physics project">⚡ Physics</button>
+            <button class="suggestion-btn" data-msg="Show me a chemistry project">🧫 Chemistry</button>
+            <button class="suggestion-btn" data-msg="Show me a biology project">🌱 Biology</button>
+            <button class="suggestion-btn" data-msg="Show me an earth science project">🌍 Earth Science</button>
+            <button class="suggestion-btn" data-msg="Surprise me with a random project!">🎲 Surprise Me!</button>
+        </div>
+
+        <!-- Input Bar -->
+        <form class="input-bar" id="inputForm">
+            <input type="text" id="userInput" class="input-field" placeholder="Ask me about science projects..."
+                autocomplete="off" />
+            <button type="submit" class="send-btn" id="sendBtn" aria-label="Send message">
+                <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"
+                    stroke-linecap="round" stroke-linejoin="round">
+                    <line x1="22" y1="2" x2="11" y2="13"></line>
+                    <polygon points="22 2 15 22 11 13 2 9 22 2"></polygon>
+                </svg>
+            </button>
+        </form>
+    </div>
+
+    <script src="script.js"></script>
+</body>
+
+</html>
